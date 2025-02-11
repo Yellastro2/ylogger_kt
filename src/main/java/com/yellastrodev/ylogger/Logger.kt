@@ -18,12 +18,16 @@ class Logger(private val context: Context, private val maxFileSize: Long = 1024 
         val logFileDateFormat = SimpleDateFormat("yyyy.MM.dd_HH-mm-ss", Locale.getDefault())
     }
     var logFile = File(context.getExternalFilesDir(null), BASE_LOG_FILENAME)
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    private var dateFormat = SimpleDateFormat("yyyy.MM.dd_HH-mm-ss", Locale.getDefault())
+
+    fun setDateFormate(format: String) {
+        dateFormat = SimpleDateFormat(format, Locale.getDefault())
+    }
 
 
-    private val customHandlers = mutableListOf<(String) -> Unit>()
+    private val customHandlers = mutableListOf<(String, String, String) -> Unit>()
 
-    fun addLogHandler(handler: (String) -> Unit ) { customHandlers.add(handler) }
+    fun addLogHandler(handler: (level: String,tag: String,message: String) -> Unit ) { customHandlers.add(handler) }
 
     fun info(tag: String?, message: String) {
         log("INFO", tag, message)
@@ -44,12 +48,12 @@ class Logger(private val context: Context, private val maxFileSize: Long = 1024 
         val preMessage = "${caller?.className?.substringAfterLast('.') ?: "Unknown"}.${caller?.methodName ?: "Unknown"}:${caller?.lineNumber ?: 0}: "
 
         val message = "$preMessage: $message"
-        var logMessage = "${logFileDateFormat.format(Date())} $level/$tag: $message"
+        var logMessage = "${dateFormat.format(Date())} $level/$tag: $message"
 
         e?.let { logMessage += "\n${Log.getStackTraceString(e)}" }
         logToFile(logMessage)
         logToConsole(level,tag,message, e)
-        customHandlers.forEach { it(logMessage) }
+        customHandlers.forEach { it(level,tag,logMessage) }
     }
 
     private fun logToFile(message: String) {

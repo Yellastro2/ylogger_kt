@@ -21,6 +21,20 @@ object AppLogger {
         }
     }
 
+    /**
+     * Adds a log handler
+     * @param handler - a function handler that takes three parameters: log level, tag, and message
+     */
+    fun addLogHandler(handler: (level: String,tag: String,message: String) -> Unit ) { logger?.addLogHandler(handler) }
+
+    /**
+     * Sets the date format for logs
+     * @param format - the date format
+     */
+    fun setDateFormat(format: String) {
+        logger?.setDateFormate(format)
+    }
+
     fun info( message: String, tag: String? = null) {
         logger?.info(tag, message)
     }
@@ -38,6 +52,12 @@ object AppLogger {
         logger?.error(tag, message, e)
     }
 
+    /**
+     * Returns a zip file with all log files
+     * @param context - the context
+     * @param fLastFileName - the last log file name, it and previous ones will be ignored
+     * @return the zip file
+     */
     fun getZipLogs(context: Context,fLastFileName: String): File {
         val filesDir = context.getExternalFilesDir(null) // или другой путь к вашим файлам
         val files = filesDir?.listFiles()?.filter { it.isFile } ?: emptyList()
@@ -49,7 +69,7 @@ object AppLogger {
 
 
 
-    fun zipFiles(files: List<File>, zipFile: File,lastFileName: String) {
+    private fun zipFiles(files: List<File>, zipFile: File,lastFileName: String) {
         if (zipFile.exists()) {
             zipFile.delete()
         }
