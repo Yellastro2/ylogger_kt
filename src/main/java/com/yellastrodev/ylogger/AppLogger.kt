@@ -1,7 +1,5 @@
 package com.yellastrodev.ymtserial.ylogger
 
-import android.annotation.SuppressLint
-import android.content.Context
 import com.yellastrodev.ymtserial.ylogger.Logger.Companion.logFileDateFormat
 import java.io.File
 import java.io.*
@@ -10,14 +8,13 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 object AppLogger {
-    @SuppressLint("StaticFieldLeak")
     var logger: Logger? = null
 
     val DEBUG = true
 
-    fun init(context: Context, maxFileSize: Long = 1024 * 1024) {
+    fun init(logDir: File? = null, maxFileSize: Long = 1024 * 1024) {
         if (logger == null) {
-            logger = Logger(context, maxFileSize)
+            logger = Logger(logDir, maxFileSize)
         }
     }
 
@@ -25,7 +22,7 @@ object AppLogger {
      * Adds a log handler
      * @param handler - a function handler that takes three parameters: log level, tag, and message
      */
-    fun addLogHandler(handler: (level: String,tag: String,message: String) -> Unit ) { logger?.addLogHandler(handler) }
+    fun addLogHandler(handler: (level: String,tag: String,message: String, e: Exception?) -> Unit ) { logger?.addLogHandler(handler) }
 
     /**
      * Sets the date format for logs
@@ -54,19 +51,18 @@ object AppLogger {
 
     /**
      * Returns a zip file with all log files
-     * @param context - the context
+     * @param logDir - the directory containing log files
      * @param fLastFileName - the last log file name, it and previous ones will be ignored
      * @return the zip file
      */
-    fun getZipLogs(context: Context,fLastFileName: String): File {
-        val filesDir = context.getExternalFilesDir(null) // или другой путь к вашим файлам
-        val files = filesDir?.listFiles()?.filter { it.isFile } ?: emptyList()
-        val zipFile = File(filesDir, "archive.zip")
+    fun getZipLogs(logDir: File? = null, fLastFileName: String = "0"): File {
+        val directory = logDir ?: logger?.logDir ?: throw IllegalStateException("logDir is not initialized")
+        val files = directory.listFiles()?.filter { it.isFile } ?: emptyList()
+        val zipFile = File(logDir, "archive.zip")
         zipFiles(files, zipFile, fLastFileName)
 
         return zipFile
     }
-
 
 
     private fun zipFiles(files: List<File>, zipFile: File,lastFileName: String) {

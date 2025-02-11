@@ -1,33 +1,73 @@
 package com.yellastrodev.ymtserial.ylogger
 
-import android.content.Context
-import android.util.Log
+//import android.util.Log
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
-class Logger(private val context: Context, private val maxFileSize: Long = 1024 * 1024) { // 1 MB по умолчанию
+class Logger(val logDir: File?, private val maxFileSize: Long = 1024 * 1024) { // 1 MB по умолчанию
 
 
+    val RESET = "\u001B[0m"
+    val RED = ""//"\u001B[31m"
+    val YELLOW = "\u001B[33m"
+    val BLUE = "\u001B[34m"
 
     companion object{
         val BASE_LOG_FILENAME = "app.log"
 
         val logFileDateFormat = SimpleDateFormat("yyyy.MM.dd_HH-mm-ss", Locale.getDefault())
     }
-    var logFile = File(context.getExternalFilesDir(null), BASE_LOG_FILENAME)
+
+    var logFile: File? = null
+
+    init {
+        logDir?.let {
+            if (!logDir.exists()) logDir.mkdirs()
+            logFile = File(logDir, BASE_LOG_FILENAME)
+        }
+
+        setPrintLogHandler { level, tag, message, e ->
+            val color = when (level) {
+                "INFO" -> "\u001B[34m"  // Синий
+                "WARN" -> "\u001B[33m"  // Желтый
+                "ERROR" -> "\u001B[31m" // Красный
+                else -> "\u001B[0m"     // Сброс цвета
+            }
+
+            val logMessage = "$color$level/$tag: $message$RESET"
+            if (level == "ERROR") {
+                System.err.println(logMessage)
+                e?.printStackTrace()
+            } else {
+                println(logMessage)
+            }
+        }
+
+    }
+
     private var dateFormat = SimpleDateFormat("yyyy.MM.dd_HH-mm-ss", Locale.getDefault())
+
+    private var printLogHandler: ((String, String, String, e: Exception?) -> Unit)? = null
+
+    fun setPrintLogHandler(handler: (level: String, tag: String, message: String, e: Exception?) -> Unit) {
+        printLogHandler = handler
+    }
+
+
 
     fun setDateFormate(format: String) {
         dateFormat = SimpleDateFormat(format, Locale.getDefault())
     }
 
 
-    private val customHandlers = mutableListOf<(String, String, String) -> Unit>()
+    private val customHandlers = mutableListOf<(String, String, String, e: Exception?) -> Unit>()
 
-    fun addLogHandler(handler: (level: String,tag: String,message: String) -> Unit ) { customHandlers.add(handler) }
+    fun addLogHandler(handler: (level: String, tag: String, message: String, e: Exception?) -> Unit ) {
+        customHandlers.add(handler)
+    }
 
     fun info(tag: String?, message: String) {
         log("INFO", tag, message)
@@ -50,10 +90,11 @@ class Logger(private val context: Context, private val maxFileSize: Long = 1024 
         val message = "$preMessage: $message"
         var logMessage = "${dateFormat.format(Date())} $level/$tag: $message"
 
-        e?.let { logMessage += "\n${Log.getStackTraceString(e)}" }
-        logToFile(logMessage)
-        logToConsole(level,tag,message, e)
-        customHandlers.forEach { it(level,tag,logMessage) }
+        e?.let { logMessage += "\n${it.stackTraceToString()}" }
+        logDir?.let { logToFile(logMessage) }
+        printLogHandler?.invoke(level, tag, logMessage, e)
+//        logToConsole(level,tag,message, e)
+        customHandlers.forEach { it(level,tag,logMessage, e) }
     }
 
     private fun logToFile(message: String) {
@@ -67,21 +108,41 @@ class Logger(private val context: Context, private val maxFileSize: Long = 1024 
         }
     }
 
+
     private fun logToConsole(level: String, tag: String, message: String, e: Exception? = null) {
-        when (level) {
-            "INFO" -> Log.i(tag, message)
-            "WARN" -> Log.w(tag, message)
-            "ERROR" -> e?.let {Log.e(tag, message,e) } ?: {Log.e(tag, message)}
-            else -> Log.d(tag, message)
+
+
+
+        val color = when (level) {
+            "INFO" -> BLUE
+            "WARN" -> YELLOW
+            "ERROR" -> RED
+            else -> RESET
         }
+
+        val logMessage = "$color$level/$tag: $message$RESET"
+
+        if (level == "ERROR") {
+            System.err.println(logMessage)
+            e?.printStackTrace()
+        } else {
+            println(logMessage)
+        }
+
+//        when (level) {
+//            "INFO" -> Log.i(tag, message)
+//            "WARN" -> Log.w(tag, message)
+//            "ERROR" -> e?.let {Log.e(tag, message,e) } ?: {Log.e(tag, message)}
+//            else -> Log.d(tag, message)
+//        }
     }
 
     private fun rotateLogFileIfNeeded() {
-        if (logFile.length() >= maxFileSize) {
+        if (logFile!!.length() >= maxFileSize) {
             val newFileName = "app_${logFileDateFormat.format(Date())}.log"
-            val newLogFile = File(logFile.parent, newFileName)
-            logFile.renameTo(newLogFile)
-            logFile = File(context.getExternalFilesDir(null), BASE_LOG_FILENAME)
+            val newLogFile = File(logFile!!.parent, newFileName)
+            logFile!!.renameTo(newLogFile)
+            logFile = File(logDir, BASE_LOG_FILENAME)
         }
     }
 
