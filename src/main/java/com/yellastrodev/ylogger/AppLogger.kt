@@ -45,7 +45,7 @@ object AppLogger {
         logger?.warn(tag, message)
     }
 
-    fun error(message: String, tag: String? = null, e: Exception? = null) {
+    fun error(message: String, e: Exception? = null, tag: String? = null) {
         logger?.error(tag, message, e)
     }
 

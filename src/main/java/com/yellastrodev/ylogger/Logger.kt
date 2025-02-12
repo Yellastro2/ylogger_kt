@@ -29,6 +29,10 @@ class Logger(val logDir: File?, private val maxFileSize: Long = 1024 * 1024) { /
         }
 
         setPrintLogHandler { level, tag, message, e ->
+
+//            var logMessage = " $level/$tag: $message"
+
+
             val color = when (level) {
                 "INFO" -> "\u001B[34m"  // Синий
                 "WARN" -> "\u001B[33m"  // Желтый
@@ -36,7 +40,7 @@ class Logger(val logDir: File?, private val maxFileSize: Long = 1024 * 1024) { /
                 else -> "\u001B[0m"     // Сброс цвета
             }
 
-            val logMessage = "$color$level/$tag: $message$RESET"
+            val logMessage = "$color${dateFormat.format(Date())} $level $tag: $message$RESET"
             if (level == "ERROR") {
                 System.err.println(logMessage)
                 e?.printStackTrace()
@@ -91,9 +95,9 @@ class Logger(val logDir: File?, private val maxFileSize: Long = 1024 * 1024) { /
 
         e?.let { logMessage += "\n${it.stackTraceToString()}" }
         logDir?.let { logToFile(logMessage) }
-        printLogHandler?.invoke(level, tag, logMessage, e)
+        printLogHandler?.invoke(level, tag, message, e)
 //        logToConsole(level,tag,message, e)
-        customHandlers.forEach { it(level,tag,logMessage, e) }
+        customHandlers.forEach { it(level,tag,message, e) }
     }
 
     private fun logToFile(message: String) {
