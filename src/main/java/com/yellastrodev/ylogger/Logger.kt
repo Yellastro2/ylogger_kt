@@ -28,7 +28,7 @@ class Logger(val logDir: File?, private val maxFileSize: Long = 1024 * 1024) { /
             logFile = File(logDir, BASE_LOG_FILENAME)
         }
 
-        setPrintLogHandler { level, tag, message, e ->
+        setPrintLogHandler {  message, level, e, tag ->
 
 //            var logMessage = " $level/$tag: $message"
 
@@ -53,9 +53,9 @@ class Logger(val logDir: File?, private val maxFileSize: Long = 1024 * 1024) { /
 
     private var dateFormat = SimpleDateFormat("yyyy.MM.dd_HH-mm-ss", Locale.getDefault())
 
-    private var printLogHandler: ((String, String, String, e: Exception?) -> Unit)? = null
+    private var printLogHandler: ((String, String, e: Exception?, String) -> Unit)? = null
 
-    fun setPrintLogHandler(handler: (level: String, tag: String, message: String, e: Exception?) -> Unit) {
+    fun setPrintLogHandler(handler: (message: String, level: String, e: Exception?, tag: String) -> Unit) {
         printLogHandler = handler
     }
 
@@ -94,9 +94,11 @@ class Logger(val logDir: File?, private val maxFileSize: Long = 1024 * 1024) { /
         var logMessage = "${dateFormat.format(Date())} $level/$tag: $message"
 
         e?.let { logMessage += "\n${it.stackTraceToString()}" }
+
         logDir?.let { logToFile(logMessage) }
-        printLogHandler?.invoke(level, tag, message, e)
-//        logToConsole(level,tag,message, e)
+
+        printLogHandler?.invoke(message, level, e, tag)
+
         customHandlers.forEach { it(level,tag,message, e) }
     }
 
