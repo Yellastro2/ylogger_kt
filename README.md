@@ -38,7 +38,7 @@ AppLogger.init(logDir, maxFileSize = 2 * 1024 * 1024) // 2MB
 Specify the something like this handler for correct prints in the Android console
 
 ```kotlin
-AppLogger.logger?.setPrintLogHandler { level, tag, message, e ->
+AppLogger.logger?.setPrintLogHandler { message: String, level: String, e: Exception, tag: String ->
 			when (level) {
 				"INFO" -> Log.i(tag, message)
 				"WARN" -> Log.w(tag, message)
@@ -68,7 +68,7 @@ AppLogger.info("This is an info message", tag = "MyTag")
 To add a custom log handler:
 
 ```kotlin
-AppLogger.addLogHandler { level, tag, message, e ->
+AppLogger.addLogHandler { message: String, level: String, e: Exception, tag: String ->
     println("Custom Handler: [$level] [$tag]: $message")
 }
 ```

@@ -66,9 +66,9 @@ class Logger(val logDir: File?, private val maxFileSize: Long = 1024 * 1024) { /
     }
 
 
-    private val customHandlers = mutableListOf<(String, String, String, e: Exception?) -> Unit>()
+    private val customHandlers = mutableListOf<(String, String, e: Exception?, String) -> Unit>()
 
-    fun addLogHandler(handler: (level: String, tag: String, message: String, e: Exception?) -> Unit ) {
+    fun addLogHandler(handler: (message: String, level: String, e: Exception?, tag: String) -> Unit ) {
         customHandlers.add(handler)
     }
 
@@ -99,7 +99,7 @@ class Logger(val logDir: File?, private val maxFileSize: Long = 1024 * 1024) { /
 
         printLogHandler?.invoke(message, level, e, tag)
 
-        customHandlers.forEach { it(level,tag,message, e) }
+        customHandlers.forEach { it(message, level, e, tag) }
     }
 
     private fun logToFile(message: String) {

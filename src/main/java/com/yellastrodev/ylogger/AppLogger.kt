@@ -22,7 +22,7 @@ object AppLogger {
      * Adds a log handler
      * @param handler - a function handler that takes three parameters: log level, tag, and message
      */
-    fun addLogHandler(handler: (level: String,tag: String,message: String, e: Exception?) -> Unit ) { logger?.addLogHandler(handler) }
+    fun addLogHandler(handler: (message: String, level: String, e: Exception?, tag: String) -> Unit ) { logger?.addLogHandler(handler) }
 
     /**
      * Sets the date format for logs
