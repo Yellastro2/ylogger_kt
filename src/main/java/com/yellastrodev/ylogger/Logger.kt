@@ -51,7 +51,7 @@ class Logger(val logDir: File?, private val maxFileSize: Long = 1024 * 1024) { /
 
     }
 
-    private var dateFormat = SimpleDateFormat("yyyy.MM.dd_HH-mm-ss", Locale.getDefault())
+    private var dateFormat = SimpleDateFormat("yyyy.MM.dd HH.mm.ss.SSS", Locale.getDefault())
 
     private var printLogHandler: ((String, String, e: Exception?, String) -> Unit)? = null
 
